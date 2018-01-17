@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <title>Train Activity</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+    <!-- <link rel="stylesheet" type="text/css" href="asssets/reset.css"> -->
+    <style>
+        body {
+            background-image: url("assets/images/background.jpg");
+        }
+
+        .jumbotron {
+            background-image: url("assets/images/train.jpg");
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            border: solid 20px black;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+        }
+
+        .panel {
+            border: solid 10px black;
+            background-image: url("assets/images/background1.jpg");
+            color: white;
+        }
+
+        #train-table {
+            width: 100%;
+        }
+
+        .col {
+            float: none;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="jumbotron">
+            <h1 class="text-center">Anytime is Train Time</h1>
+            <!-- <h2 class="text-center">Choo Choo. Chee Chee</h2> -->
+            <h3 class="text-center">
+                </span>Beep beep ima train coming in like a hurricane</h3>
+            <h2>
+                <span class="glyphicon glyphicon-star"></span>
+            </h2>
+
+            <h2>
+                <span class="glyphicon glyphicon-star"></span>
+            </h2>
+        </div>
+
+
+        <!-- Container 1 -->
+        <div class="row">
+            <div class="col-lg-8 col">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Current Train Schedule</h3>
+                    </div>
+
+                    <div class="panel-body">
+                        <table id="train-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Train Name</th>
+                                    <th scope="col">Destination</th>
+                                    <th scope="col">Frequency (min)</th>
+                                    <th scope="col">Next Arrival</th>
+                                    <th scope="col">Minutes Away</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <!-- Add dynamic <tr>+<td>s via firebase data calls -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container 2 -->
+        <div class="row">
+            <div class="col-lg-8 col">
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Add Train</h3>
+                    </div>
+
+                    <div class="panel-body">
+                        <form role="form">
+                            <div class="form-group">
+                                <label for="name-input">Train Name</label>
+                                <input class="form-control" id="name-input" type="text">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dest-input">Destination</label>
+                                <input class="form-control" id="dest-input" type="text">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="time-input">First Train Time (HH:mm - military time)</label>
+                                <input class="form-control" id="time-input" type="text">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="freq-input">Frequency (min)</label>
+                                <input class="form-control" id="freq-input" type="text">
+                            </div>
+
+
+                            <button class="btn btn-default" id="train-submit" type="submit">Submit</button>
+                            <!-- Cant find client-side method to clear database values. Imported empty JSON file into Firebase to clear instead. 
+                                <button class="btn btn-default" id="train-reset" type="submit">Reset</button> 
+                            -->
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+  
+   
+    <script src="https://www.gstatic.com/firebasejs/4.8.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.8.2/firebase-database.js"></script>
+        <!-- 
+    <script src="https://www.gstatic.com/firebasejs/4.8.2/firebase-messaging.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.8.2/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.8.2/firebase-auth.js"></script>
+        -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="assets/moment.js"></script>
+
+    <script>
+        // Pseudocodez:
+        // link bootstrap, jquery, javascript, css if needed
+        // Bootstrap UI
+        // Container 1 - dynamic generated rows from container 2 - panel with header/empty body
+        // Container 2 - form
+        // Submit inputs from form to firebase
+        // Pull data from firebase to container 1
+        // Calculations for last 2 columns in container 1
+        // Success
+
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyBcmhHLrlaNmM5lCytTxCd08XNTz518vIM",
+            authDomain: "homewor-eac38.firebaseapp.com",
+            databaseURL: "https://homewor-eac38.firebaseio.com",
+            projectId: "homewor-eac38",
+            storageBucket: "homewor-eac38.appspot.com",
+            messagingSenderId: "337945697873"
+        };
+
+        firebase.initializeApp(config);
+        // Create a variable to reference the database
+        var database = firebase.database();
+
+        // Form entry function (Container 2)
+        $("#train-submit").on("click", function (event) {
+            event.preventDefault();
+
+            // Grab user input
+            var name = $("#name-input").val().trim();
+            var dest = $("#dest-input").val().trim();
+            var time = $("#time-input").val().trim();
+            var freq = $("#freq-input").val().trim();
+
+            // Create local temp object for holding train data
+            var newTrain = {
+                name: name,
+                destination: dest,
+                time: time,
+                frequency: freq
+            };
+
+            // Upload train data to firebase
+            database.ref().push(newTrain);
+
+            // Clears all of the text-boxes
+            $("#name-input").val("");
+            $("#dest-input").val("");
+            $("#time-input").val("");
+            $("#freq-input").val("");
+        })
+
+        // Firebase event: When trains are added to the database, add new row in table (Container 1)
+        database.ref().on("child_added", function (childSnapshot, prevChildKey) {
+
+            // Store everything into a variable.
+            var trainName = childSnapshot.val().name;
+            var trainDest = childSnapshot.val().destination;
+            var trainTime = childSnapshot.val().time;
+            var trainFreq = childSnapshot.val().frequency;
+
+            // Prettify the train time (should do when sending to firebase not after)
+            // To calculate the next train time...
+            var trainTimeConverted = moment(trainTime, "hh:mm").subtract(1, "years");
+            console.log(trainTimeConverted);
+            var currentTime = moment();
+            var diffTime = moment().diff(moment(trainTimeConverted), "minutes");
+            console.log("Time difference: " + diffTime);
+            var tRemainder = diffTime % trainFreq;
+            var tMinutesTillTrain = trainFreq - tRemainder;
+            console.log("Minutes until Train: " + tMinutesTillTrain);
+            var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+            console.log("Arrival Time: " + moment(nextTrain).format("hh:mm"));
+            var nextTrain2 = moment(nextTrain).format("hh:mm");
+
+            // Add each train's data into the table
+            $("#train-table > tbody").append(
+                "<tr><td>" + trainName +
+                "</td><td>" + trainDest +
+                "</td><td>" + trainFreq +
+                "</td><td>" + nextTrain2 +
+                "</td><td>" + tMinutesTillTrain +
+                "</td></tr>")
+        });
+
+    </script>
+
+</body>
+
+</html>
